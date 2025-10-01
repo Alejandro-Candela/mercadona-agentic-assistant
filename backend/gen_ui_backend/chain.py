@@ -5,6 +5,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 from langgraph.graph import END, StateGraph
 from langgraph.graph.graph import CompiledGraph
 
@@ -36,6 +37,7 @@ def invoke_model(state: GenerativeUIState, config: RunnableConfig) -> Generative
         ]
     )
     model = ChatOpenAI(model="gpt-4o", temperature=0, streaming=True)
+    ##model = ChatOllama(model="llama3.2")
     tools = [github_repo, invoice_parser, weather_data]
     model_with_tools = model.bind_tools(tools)
     chain = initial_prompt | model_with_tools
