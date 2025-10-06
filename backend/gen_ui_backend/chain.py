@@ -80,24 +80,35 @@ def agente_1_clasificador(
     prompt = ChatPromptTemplate.from_messages([
         (
             "system",
-            """Eres un asistente especializado en clasificar intenciones de compra.
-            
+            """Eres un asistente especializado en clasificar intenciones de compra y detectar cantidades exactas.
+
 Tu trabajo es:
 1. Identificar si el usuario quiere comprar productos
 2. Extraer la lista de productos mencionados
-3. Detectar las cantidades de cada producto (por defecto 1 si no se especifica)
+3. Detectar las cantidades EXACTAS de cada producto
+
+REGLAS IMPORTANTES PARA DETECTAR CANTIDADES:
+- Busca números antes o después del producto: "2 leches", "leche x 3", "tres panes"
+- Busca cantidades en formato texto: "dos", "tres", "cuatro", "cinco", etc.
+- Busca patrones con "de": "3 de leche", "2 de pan"
+- Si el usuario menciona varios productos separados, detecta la cantidad individual de cada uno
+- Por defecto asigna 1 SOLO si no se menciona ninguna cantidad
+- Presta especial atención a cada producto y su cantidad específica
+
+EJEMPLOS:
+Entrada: "quiero 2 leches y 3 panes"
+Salida: {{"intencion": "compra", "productos": ["leche", "pan"], "cantidades": {{"leche": 2, "pan": 3}}}}
+
+Entrada: "dame tres leches, dos panes y cinco huevos"
+Salida: {{"intencion": "compra", "productos": ["leche", "pan", "huevos"], "cantidades": {{"leche": 3, "pan": 2, "huevos": 5}}}}
+
+Entrada: "necesito leche x 4 y pan x 2"
+Salida: {{"intencion": "compra", "productos": ["leche", "pan"], "cantidades": {{"leche": 4, "pan": 2}}}}
 
 Responde en formato JSON con:
 - intencion: "compra" o "consulta"
 - productos: lista de nombres de productos
-- cantidades: diccionario con producto -> cantidad (número)
-
-Ejemplo de respuesta:
-{{
-    "intencion": "compra",
-    "productos": ["leche", "pan", "huevos"],
-    "cantidades": {{"leche": 2, "pan": 1, "huevos": 1}}
-}}"""
+- cantidades: diccionario con producto -> cantidad (número entero)"""
         ),
         MessagesPlaceholder("messages")
     ])
@@ -289,8 +300,6 @@ def agente_3_calculador(
 ---
 
 {ticket}
-
-¿Deseas confirmar la compra?
 """
         
         return Command(

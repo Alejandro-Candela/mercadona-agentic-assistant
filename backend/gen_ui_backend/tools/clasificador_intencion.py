@@ -33,6 +33,9 @@ NUMEROS_TEXTO = {
     "un": 1, "una": 1, "uno": 1,
     "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5,
     "seis": 6, "siete": 7, "ocho": 8, "nueve": 9, "diez": 10,
+    "once": 11, "doce": 12, "trece": 13, "catorce": 14, "quince": 15,
+    "dieciseis": 16, "dieciséis": 16, "diecisiete": 17, "dieciocho": 18,
+    "diecinueve": 19, "veinte": 20,
     "media": 0.5, "medio": 0.5
 }
 
@@ -113,34 +116,83 @@ def clasificar_intencion(user_input: str) -> Dict[str, Any]:
                         productos.append(match)
                         print(f"   ⚠️  Producto potencial: {match}")
         
-        # 3. EXTRAER CANTIDADES
+        # 3. EXTRAER CANTIDADES CON PATRONES MEJORADOS
         cantidades = {}
         
-        # Patrón: [número] [producto] o [producto] x [número]
-        # Ejemplos: "2 leches", "leche x 2", "tres panes"
+        # Patrón mejorado: múltiples formas de expresar cantidades
+        # Ejemplos: "2 leches", "leche x 2", "tres panes", "3 de leche", "leches x3"
         for producto in productos:
             cantidad = 1  # Por defecto
+            cantidad_encontrada = False
             
-            # Buscar número antes del producto
-            patron_antes = rf"(\d+)\s+{producto}"
-            match = re.search(patron_antes, texto)
+            # Escapar caracteres especiales en el nombre del producto para regex
+            producto_escaped = re.escape(producto)
+            
+            # Patrón 1: número + producto (ej: "2 leches", "3 panes")
+            patron_numero_antes = rf"(\d+)\s*(?:de\s+)?{producto_escaped}s?"
+            match = re.search(patron_numero_antes, texto)
             if match:
                 cantidad = int(match.group(1))
+                cantidad_encontrada = True
+                print(f"   📊 [Patrón número antes] {producto}: {cantidad}")
             
-            # Buscar número en texto antes del producto
-            patron_texto = rf"({'|'.join(NUMEROS_TEXTO.keys())})\s+{producto}"
-            match = re.search(patron_texto, texto)
-            if match:
-                cantidad = NUMEROS_TEXTO.get(match.group(1), 1)
+            # Patrón 2: texto número + producto (ej: "dos leches", "tres panes")
+            if not cantidad_encontrada:
+                patron_texto_antes = rf"({'|'.join(NUMEROS_TEXTO.keys())})\s*(?:de\s+)?{producto_escaped}s?"
+                match = re.search(patron_texto_antes, texto)
+                if match:
+                    cantidad = NUMEROS_TEXTO.get(match.group(1), 1)
+                    cantidad_encontrada = True
+                    print(f"   📊 [Patrón texto antes] {producto}: {cantidad}")
             
-            # Buscar número después con "x"
-            patron_x = rf"{producto}\s*x\s*(\d+)"
-            match = re.search(patron_x, texto)
-            if match:
-                cantidad = int(match.group(1))
+            # Patrón 3: producto + x + número (ej: "leche x 2", "pan x3")
+            if not cantidad_encontrada:
+                patron_x_despues = rf"{producto_escaped}s?\s*x\s*(\d+)"
+                match = re.search(patron_x_despues, texto)
+                if match:
+                    cantidad = int(match.group(1))
+                    cantidad_encontrada = True
+                    print(f"   📊 [Patrón x después] {producto}: {cantidad}")
+            
+            # Patrón 4: "de" + producto (ej: "3 de leche", "cinco de pan")
+            if not cantidad_encontrada:
+                patron_de = rf"(\d+|{'|'.join(NUMEROS_TEXTO.keys())})\s+de\s+{producto_escaped}s?"
+                match = re.search(patron_de, texto)
+                if match:
+                    cantidad_str = match.group(1)
+                    if cantidad_str.isdigit():
+                        cantidad = int(cantidad_str)
+                    else:
+                        cantidad = NUMEROS_TEXTO.get(cantidad_str, 1)
+                    cantidad_encontrada = True
+                    print(f"   📊 [Patrón de] {producto}: {cantidad}")
+            
+            # Patrón 5: coma o "y" separadores (ej: "2 leches, 3 panes y 4 huevos")
+            # Buscar la cantidad más cercana antes del producto
+            if not cantidad_encontrada:
+                # Buscar hacia atrás desde el producto
+                pos_producto = texto.find(producto)
+                if pos_producto > 0:
+                    texto_antes = texto[:pos_producto]
+                    # Buscar el último número antes del producto (máximo 20 caracteres atrás)
+                    texto_antes_cercano = texto_antes[-20:]
+                    match_numero = re.search(r'(\d+)\s*$', texto_antes_cercano)
+                    if match_numero:
+                        cantidad = int(match_numero.group(1))
+                        cantidad_encontrada = True
+                        print(f"   📊 [Patrón cercano] {producto}: {cantidad}")
+                    else:
+                        # Buscar texto número
+                        for num_texto, num_valor in NUMEROS_TEXTO.items():
+                            if num_texto in texto_antes_cercano:
+                                cantidad = num_valor
+                                cantidad_encontrada = True
+                                print(f"   📊 [Patrón texto cercano] {producto}: {cantidad}")
+                                break
             
             cantidades[producto] = cantidad
-            print(f"   📊 Cantidad de {producto}: {cantidad}")
+            if not cantidad_encontrada:
+                print(f"   📊 [Por defecto] {producto}: {cantidad}")
         
         # Si hay productos sin cantidades explícitas, asignar 1
         for producto in productos:
