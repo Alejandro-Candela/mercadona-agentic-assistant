@@ -45,7 +45,7 @@ def agente_1_clasificador(
             }
         )
     
-    model = ChatOpenAI(model="gpt-4o", temperature=0)
+    model = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.1)
     
     # Preparar el prompt para el clasificador
     prompt = ChatPromptTemplate.from_messages([
