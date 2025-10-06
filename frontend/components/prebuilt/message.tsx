@@ -6,7 +6,7 @@ export interface MessageTextProps {
 
 export function AIMessageText(props: MessageTextProps) {
   return (
-    <div className="flex mr-auto w-fit max-w-[700px] bg-blue-400 rounded-md px-2 py-1 mt-3">
+    <div className="flex mr-auto w-fit max-w-[700px] bg-gradient-to-r from-green-600 to-green-700 rounded-md px-2 py-1 mt-3">
       <div className="text-normal text-gray-50 text-left break-words">
         <Markdown>{props.content}</Markdown>
       </div>

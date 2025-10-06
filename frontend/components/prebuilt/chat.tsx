@@ -124,7 +124,7 @@ export default function Chat() {
         className="w-full flex flex-row gap-2"
       >
         <Input
-          placeholder="What's the weather like in San Francisco?"
+          placeholder="Quiero comprar..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
@@ -141,7 +141,7 @@ export default function Chat() {
             }}
           />
         </div>
-        <Button type="submit">Submit</Button>
+        <Button type="submit">Enviar</Button>
       </form>
     </div>
   );
