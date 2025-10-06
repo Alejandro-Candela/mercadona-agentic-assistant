@@ -21,6 +21,7 @@ export interface TicketData {
   total: number;
   num_items: number;
   num_productos: number;
+  fecha?: string;
 }
 
 export interface ArchivosDescargables {
@@ -88,15 +89,45 @@ export function TicketCompra({ ticketData, archivos }: TicketCompraProps) {
     return path.split(/[\\/]/).pop() || path;
   };
 
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) {
+      return new Date().toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+    
+    // Convertir timestamp formato YYYYMMDD_HHMMSS a fecha legible
+    const year = timestamp.substring(0, 4);
+    const month = timestamp.substring(4, 6);
+    const day = timestamp.substring(6, 8);
+    const hour = timestamp.substring(9, 11);
+    const minute = timestamp.substring(11, 13);
+    const second = timestamp.substring(13, 15);
+    
+    return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+  };
+
+  const fechaHora = ticketData.fecha || formatTimestamp(archivos?.timestamp);
+
   return (
     <Card className="w-full max-w-3xl mx-auto my-4 shadow-lg">
       <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white">
         <CardTitle className="text-2xl font-bold">
           🛒 Lista de la Compra - Mercadona
         </CardTitle>
-        <p className="text-sm text-green-100">
-          {ticketData.num_items} artículos diferentes • {ticketData.num_productos} unidades totales
-        </p>
+        <div className="flex justify-between items-center mt-2">
+          <p className="text-sm text-green-100">
+            {ticketData.num_items} artículos diferentes • {ticketData.num_productos} unidades totales
+          </p>
+          <p className="text-sm text-green-100 font-mono">
+            📅 {fechaHora}
+          </p>
+        </div>
       </CardHeader>
       
       <CardContent className="p-6">

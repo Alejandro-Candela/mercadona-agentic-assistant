@@ -53,11 +53,21 @@ function parseTicketData(content: string): {
   const txtPathMatch = content.match(/TXT\*\*:\s*`([^`]+)`/);
   const csvPathMatch = content.match(/CSV\*\*:\s*`([^`]+)`/);
 
+  // Extraer timestamp de la ruta del archivo (formato: ticket_YYYYMMDD_HHMMSS.ext)
+  let timestamp: string | undefined;
+  if (jsonPathMatch) {
+    const timestampMatch = jsonPathMatch[1].match(/ticket_(\d{8}_\d{6})/);
+    if (timestampMatch) {
+      timestamp = timestampMatch[1];
+    }
+  }
+
   const archivos: ArchivosDescargables = {
     success: true,
     json_path: jsonPathMatch ? jsonPathMatch[1] : undefined,
     txt_path: txtPathMatch ? txtPathMatch[1] : undefined,
     csv_path: csvPathMatch ? csvPathMatch[1] : undefined,
+    timestamp: timestamp,
   };
 
   const ticketData: TicketData = {
