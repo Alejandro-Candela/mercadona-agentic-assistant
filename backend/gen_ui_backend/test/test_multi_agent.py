@@ -2,7 +2,7 @@
 Script de prueba para el sistema multi-agente de compra en Mercadona.
 """
 from langchain_core.messages import HumanMessage
-from gen_ui_backend.chain import create_multi_agent_graph
+from gen_ui_backend.graph import create_multi_agent_graph
 
 
 def test_sistema_multi_agente():

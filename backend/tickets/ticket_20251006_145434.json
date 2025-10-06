@@ -1,0 +1,31 @@
+{
+  "fecha": "06/10/2025 14:54:34",
+  "timestamp": "20251006_145434",
+  "resumen": {
+    "articulos_diferentes": 2,
+    "unidades_totales": 3,
+    "subtotal": 2.01,
+    "descuentos": 0.0,
+    "total": 2.01
+  },
+  "productos": [
+    {
+      "producto_id": "10384",
+      "nombre": "Leche desnatada Hacendado",
+      "cantidad": 2,
+      "precio_unitario": 0.84,
+      "precio_total": 1.68,
+      "packaging": "Brick",
+      "categoria": "Huevos, leche y mantequilla"
+    },
+    {
+      "producto_id": "83116",
+      "nombre": "Pan mini semillas",
+      "cantidad": 1,
+      "precio_unitario": 0.33,
+      "precio_total": 0.33,
+      "packaging": null,
+      "categoria": "Panadería y pastelería"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "fecha": "06/10/2025 15:00:16",
+  "timestamp": "20251006_150016",
+  "resumen": {
+    "articulos_diferentes": 2,
+    "unidades_totales": 6,
+    "subtotal": 10.0,
+    "descuentos": 0.0,
+    "total": 10.0
+  },
+  "productos": [
+    {
+      "producto_id": "31540",
+      "nombre": "Huevos grandes L",
+      "cantidad": 5,
+      "precio_unitario": 1.8,
+      "precio_total": 9.0,
+      "packaging": "Paquete",
+      "categoria": "Huevos, leche y mantequilla"
+    },
+    {
+      "producto_id": "14213",
+      "nombre": "Galletas Digestive avena Hacendado",
+      "cantidad": 1,
+      "precio_unitario": 1.0,
+      "precio_total": 1.0,
+      "packaging": "Paquete",
+      "categoria": "Cereales y galletas"
+    }
+  ]
+}

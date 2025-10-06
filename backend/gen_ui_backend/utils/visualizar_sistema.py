@@ -1,7 +1,7 @@
 """
 Script para visualizar la estructura del sistema multi-agente.
 """
-from gen_ui_backend.chain import create_multi_agent_graph
+from gen_ui_backend.graph import create_multi_agent_graph
 
 
 def mostrar_estructura():

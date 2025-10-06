@@ -4,7 +4,7 @@ Script de prueba del flujo completo del sistema multi-agente.
 import os
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
-from gen_ui_backend.chain import create_multi_agent_graph
+from gen_ui_backend.graph import create_multi_agent_graph
 
 # Cargar variables de entorno
 load_dotenv()
