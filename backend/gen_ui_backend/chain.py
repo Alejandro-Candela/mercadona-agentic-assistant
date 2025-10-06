@@ -10,6 +10,7 @@ from langgraph.types import Command
 from gen_ui_backend.tools.clasificador_intencion import clasificar_intencion
 from gen_ui_backend.tools.buscador_mercadona import buscar_multiples_productos
 from gen_ui_backend.tools.calculador_ticket import calcular_precio_total, generar_ticket_compra
+from gen_ui_backend.tools.generador_archivos import generar_archivos_ticket
 
 
 class MultiAgentState(TypedDict, total=False):
@@ -38,6 +39,8 @@ class MultiAgentState(TypedDict, total=False):
     """Información de precios calculados."""
     ticket: Optional[str]
     """Ticket de compra generado."""
+    archivos_generados: Optional[dict]
+    """Información de archivos descargables generados."""
     
     # Control de flujo
     current_agent: Optional[str]
@@ -168,7 +171,7 @@ Responde en formato JSON con:
 
 def agente_2_buscador(
     state: MultiAgentState,
-    config: RunnableConfig  # noqa: ARG001
+    config: RunnableConfig  # noqa: ARG001 - Requerido por la interfaz
 ) -> Command[Literal["agente_3_calculador", "respuesta_final"]]:
     """
     Agente 2: Buscador de productos en la API de Mercadona.
@@ -230,7 +233,7 @@ def agente_2_buscador(
 
 def agente_3_calculador(
     state: MultiAgentState,
-    config: RunnableConfig
+    config: RunnableConfig  # noqa: ARG001 - Requerido por la interfaz
 ) -> Command[Literal["respuesta_final"]]:
     """
     Agente 3: Calculador de precios y generador del ticket de compra.
@@ -264,6 +267,33 @@ def agente_3_calculador(
         })
         
         print("Ticket generado exitosamente")
+        
+        # Generar archivos descargables
+        archivos_info = generar_archivos_ticket.invoke({
+            "productos": productos,
+            "cantidades": cantidades,
+            "precio_info": precio_info
+        })
+        
+        print("Archivos descargables generados exitosamente")
+        
+        # Preparar tabla de productos para el mensaje
+        items = precio_info.get("items", [])
+        tabla_productos = "\n\n📦 **LISTA DE LA COMPRA**\n\n"
+        tabla_productos += "| Nº | Producto | Cantidad | Precio Unit. | Precio Total |\n"
+        tabla_productos += "|---|---|---|---|---|\n"
+        
+        for i, item in enumerate(items, 1):
+            nombre = item.get("nombre", "")
+            cantidad = item.get("cantidad", 0)
+            precio_unitario = item.get("precio_unitario", 0.0)
+            precio_total = item.get("precio_total", 0.0)
+            
+            # Truncar nombre si es muy largo
+            if len(nombre) > 35:
+                nombre = nombre[:32] + "..."
+            
+            tabla_productos += f"| {i} | {nombre} | {cantidad} | {precio_unitario:.2f}€ | **{precio_total:.2f}€** |\n"
         
         # Preparar mensaje consolidado con información de los 3 agentes
         mensaje_consolidado = f"""🔄 **PROCESO COMPLETADO**
@@ -299,6 +329,20 @@ def agente_3_calculador(
 
 ---
 
+{tabla_productos}
+
+---
+
+📥 **ARCHIVOS DESCARGABLES**
+
+Los archivos del ticket han sido generados y están listos para descargar:
+
+- 📄 **JSON**: `{archivos_info.get('json_path', 'N/A')}`
+- 📝 **TXT**: `{archivos_info.get('txt_path', 'N/A')}`
+- 📊 **CSV**: `{archivos_info.get('csv_path', 'N/A')}`
+
+---
+
 {ticket}
 """
         
@@ -307,6 +351,7 @@ def agente_3_calculador(
             update={
                 "precio_info": precio_info,
                 "ticket": ticket,
+                "archivos_generados": archivos_info,
                 "final_result": mensaje_consolidado,
                 "current_agent": "agente_3"
             }

@@ -11,6 +11,7 @@ from gen_ui_backend.tools.calculador_ticket import (
     calcular_precio_total,
     generar_ticket_compra
 )
+from gen_ui_backend.tools.generador_archivos import generar_archivos_ticket
 
 __all__ = [
     "clasificar_intencion",
@@ -18,4 +19,5 @@ __all__ = [
     "buscar_multiples_productos",
     "calcular_precio_total",
     "generar_ticket_compra",
+    "generar_archivos_ticket",
 ]
