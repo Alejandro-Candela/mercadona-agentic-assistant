@@ -1,90 +1,201 @@
-# Generative UI with LangChain Python 🦜🔗
+# Asistente de Compras para Mercadona 🛒
 
-![Generative UI with LangChain Python](./frontend/public/gen_ui_diagram.png)
+Sistema multi-agente inteligente basado en LangGraph que permite gestionar compras en Mercadona mediante conversaciones naturales. El sistema procesa solicitudes de compra, busca productos, calcula precios y genera tickets descargables.
 
-## Overview
+## 🎯 Características
 
-This application aims to provide a template for building generative UI applications with LangChain Python.
-It comes pre-built with a few UI features which you can use to play about with gen ui. The UI components are built using [Shadcn](https://ui.shadcn.com/).
+- **Sistema Multi-Agente**: Flujo orquestado de 3 agentes especializados usando LangGraph
+- **Procesamiento de Lenguaje Natural**: Comprende peticiones de compra en español
+- **Búsqueda de Productos**: Integración con API de Mercadona para búsqueda en tiempo real
+- **Cálculo Automático**: Calcula precios totales, descuentos y genera tickets formateados
+- **Tickets Descargables**: Genera tickets en formato JSON, TXT y CSV
+- **UI Generativa**: Interfaz moderna con componentes React renderizados dinámicamente
+- **Streaming en Tiempo Real**: Respuestas en tiempo real mediante streaming de eventos
 
-## Getting Started
+## 🏗️ Arquitectura
 
-### Installation
+### Sistema Multi-Agente
 
-First, clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/bracesproul/gen-ui-python.git
-
-cd gen-ui-python
+```text
+START → Agente 1 (Clasificador) → Agente 2 (Buscador) → Agente 3 (Calculador) → END
 ```
 
-Install dependencies in the `frontend` and `backend` directories:
+1. **Agente Clasificador**: Analiza la intención del usuario y extrae productos y cantidades
+1. **Agente Buscador**: Busca productos en la API de Mercadona y verifica disponibilidad
+1. **Agente Calculador**: Calcula precios totales y genera el ticket de compra
+
+### Stack Tecnológico
+
+**Backend:**
+
+- FastAPI + LangServe para el servidor API
+- LangGraph para orquestación multi-agente
+- LangChain + OpenAI para procesamiento de lenguaje natural
+- Python 3.11+
+
+**Frontend:**
+
+- Next.js 14 (App Router)
+- React 18 con TypeScript
+- Tailwind CSS + shadcn/ui
+- LangGraph SDK para streaming
+
+## 🚀 Getting Started
+
+### Prerequisitos
+
+- Node.js 18+ y Yarn
+- Python 3.11+
+- Cuenta de OpenAI con API key
+
+### Instalación
+
+1. **Instalar dependencias del frontend**
 
 ```bash
-cd ./frontend
-
+cd frontend
 yarn install
 ```
 
+2. **Instalar dependencias del backend**
+
 ```bash
 cd ../backend
-
-poetry install
+pip install -r gen_ui_backend/requirements.txt
 ```
 
-### Secrets
+### Variables de Entorno
 
-Next, if you plan on using the existing pre-built UI components, you'll need to set a few environment variables:
-
-Copy the [`.env.example`](./backend/.env.example) file to `.env` inside the `backend` directory.
-
-LangSmith keys are optional, but highly recommended if you plan on developing this application further.
-
-The `OPENAI_API_KEY` is required. Get your OpenAI API key from the [OpenAI dashboard](https://platform.openai.com/login?launch).
-
-[Sign up/in to LangSmith](https://smith.langchain.com/) and get your API key.
-
-Create a new [GitHub PAT (Personal Access Token)](https://github.com/settings/tokens/new) with the `repo` scope.
-
-[Create a free Geocode account](https://geocode.xyz/api).
+Copia el archivo de ejemplo y configura tus claves API:
 
 ```bash
-# ------------------LangSmith tracing------------------
+cd backend
+cp .env.example .env
+```
+
+Edita el archivo `.env` con tus credenciales:
+
+```bash
+# REQUERIDO: OpenAI API Key
+OPENAI_API_KEY=sk-...
+
+# OPCIONAL: LangSmith para trazabilidad (recomendado para desarrollo)
 LANGCHAIN_API_KEY=...
 LANGCHAIN_CALLBACKS_BACKGROUND=true
 LANGCHAIN_TRACING_V2=true
-# -----------------------------------------------------
-
-GITHUB_TOKEN=...
-OPENAI_API_KEY=...
-GEOCODE_API_KEY=...
+LANGCHAIN_PROJECT=mercadona-assistant
 ```
 
-### Running the Application
+**Obtener las claves:**
+
+- OpenAI API Key: [OpenAI Dashboard](https://platform.openai.com/api-keys)
+- LangSmith API Key: [LangSmith](https://smith.langchain.com/)
+
+### Ejecutar la Aplicación
+
+1. **Iniciar el backend** (en una terminal):
 
 ```bash
-cd ./frontend
+cd backend
+python gen_ui_backend/server.py
+```
 
+El servidor estará disponible en `http://localhost:8000`
+
+1. **Iniciar el frontend** (en otra terminal):
+
+```bash
+cd frontend
 yarn dev
 ```
 
-This will start a development server on [`http://localhost:3000`](http://localhost:3000).
+La aplicación estará disponible en `http://localhost:3000`
 
-Then, in a new terminal window:
+## 📖 Uso
 
-```bash
-cd ../backend
+### Ejemplo de Conversación
 
-poetry run start
+```text
+Usuario: "Quiero comprar 2 leches y un pan"
+
+Agente Clasificador: Detecta intención de compra
+                     Productos: ["leche", "pan"]
+                     Cantidades: {leche: 2, pan: 1}
+
+Agente Buscador: Busca en Mercadona
+                 ✓ Leche Entera 1L - 1.20€
+                 ✓ Pan de Molde - 0.85€
+
+Agente Calculador: Calcula total
+                   2×1.20 + 1×0.85 = 3.25€
+                   Genera ticket descargable
+
+Sistema: Muestra ticket interactivo con opción de descarga
 ```
 
-### Go further
+### Uso Programático
 
-If you're interested in ways to take this demo application further, I'd consider the following:
+```python
+from langchain_core.messages import HumanMessage
+from gen_ui_backend.graph import create_graph
 
-- Generating entire React components to be rendered, instead of relying on pre-built components.
-- Using the LLM to build custom components using a UI library like [Shadcn](https://ui.shadcn.com/).
-- Multi-tool and component usage.
-- Update the LangGraph agent to call multiple tools, and appending multiple different UI components to the client rendered UI.
-- Generative UI outside of the chatbot window: Have the UI dynamically render in different areas on the screen. E.g a dashboard, where the components are dynamically rendered based on the LLMs output.
+graph = create_graph()
+
+resultado = graph.invoke({
+    "messages": [
+        HumanMessage(content="Quiero 2 leches y pan")
+    ]
+})
+
+print(resultado["final_result"])
+```
+
+## 🛠️ Desarrollo
+
+### Estructura del Proyecto
+
+```text
+gen-ui-pythonv3/
+├── backend/
+│   ├── gen_ui_backend/
+│   │   ├── agents/          # Agentes especializados
+│   │   ├── tools/           # Herramientas de los agentes
+│   │   ├── utils/           # Utilidades
+│   │   ├── graph.py         # Definición del grafo multi-agente
+│   │   └── server.py        # Servidor FastAPI
+│   └── docs/                # Documentación técnica
+└── frontend/
+    ├── app/                 # App Router de Next.js
+    ├── components/          # Componentes React
+    │   ├── prebuilt/        # Componentes pre-construidos
+    │   └── ui/              # Componentes UI (shadcn)
+    └── utils/               # Utilidades del cliente
+```
+
+### Ejecutar Tests
+
+```bash
+cd backend/gen_ui_backend
+python test_multi_agent.py
+```
+
+### Scripts Útiles
+
+```bash
+# Formatear código frontend
+cd frontend
+yarn format
+
+# Verificar imports del backend
+cd backend
+python scripts/check_imports.py
+```
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT.
+
+## 🙏 Agradecimientos
+
+- [LangGraph](https://langchain-ai.github.io/langgraph/) por el framework multi-agente
+- [shadcn/ui](https://ui.shadcn.com/) por los componentes UI
