@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from langserve import add_routes
 
 from gen_ui_backend.chain import create_graph
-from gen_ui_backend.input_types import ChatInputType
+from gen_ui_backend.utils.input_types import ChatInputType
 
 # Load environment variables from .env file
 load_dotenv()
