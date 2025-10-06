@@ -64,7 +64,7 @@ export default function Chat() {
     });
 
     newElements.push(
-      <div className="flex flex-col w-full gap-1 mt-auto" key={history.length}>
+      <div className="flex flex-col w-full gap-1 mt-auto" key={elements.length}>
         {selectedFile && <FileUploadMessage file={selectedFile} />}
         <HumanMessageText content={input} />
         <div className="flex flex-col gap-1 w-full max-w-fit mr-auto">
