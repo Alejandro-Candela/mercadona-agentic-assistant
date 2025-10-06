@@ -72,7 +72,12 @@ export function streamRunnableUI<RunInput, RunOutput>(
     // to the client thanks to RSC
     const resolveValue =
       lastEventValue?.data.output || lastEventValue?.data.chunk?.data?.output;
-    resolve(resolveValue);
+    
+    // Serialize to plain JSON to avoid RSC serialization errors
+    // This converts any LangChain classes to plain objects
+    const serializedValue = resolveValue ? JSON.parse(JSON.stringify(resolveValue)) : null;
+    
+    resolve(serializedValue);
     Object.values(callbacks).forEach((cb) => cb.done());
     ui.done();
   })();

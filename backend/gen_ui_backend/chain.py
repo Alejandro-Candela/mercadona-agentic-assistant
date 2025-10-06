@@ -1,9 +1,9 @@
-from typing import List, Optional, TypedDict, Literal
+from typing import List, Optional, TypedDict, Literal, Annotated
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, START
+from langgraph.graph import StateGraph, START, add_messages
 from langgraph.graph.graph import CompiledGraph
 from langgraph.types import Command
 
@@ -16,7 +16,7 @@ class MultiAgentState(TypedDict, total=False):
     """Estado compartido entre todos los agentes."""
     input: Optional[List[HumanMessage | AIMessage | SystemMessage]]
     """Input del servidor (compatibilidad con sistema antiguo)."""
-    messages: List[HumanMessage | AIMessage | SystemMessage]
+    messages: Annotated[List[HumanMessage | AIMessage | SystemMessage], add_messages]
     """Lista de mensajes para comunicación entre agentes."""
     
     # Datos del Agente 1 - Clasificador
@@ -49,7 +49,7 @@ class MultiAgentState(TypedDict, total=False):
 def agente_1_clasificador(
     state: MultiAgentState, 
     config: RunnableConfig
-) -> Command[Literal["agente_2_buscador", "__end__"]]:
+) -> Command[Literal["agente_2_buscador", "respuesta_final"]]:
     """
     Agente 1: Clasificador de intención y productos.
     
@@ -67,9 +67,9 @@ def agente_1_clasificador(
     
     if not messages:
         return Command(
-            goto="__end__",
+            goto="respuesta_final",
             update={
-                "final_result": "No se recibieron mensajes",
+                "final_result": "❌ No se recibieron mensajes",
                 "current_agent": "agente_1"
             }
         )
@@ -121,32 +121,33 @@ Ejemplo de respuesta:
         print(f"Cantidades: {clasificacion.get('cantidades')}")
         
         # Si hay productos, ir al agente buscador
-        if clasificacion.get("productos"):
+        productos = clasificacion.get("productos", [])
+        cantidades = clasificacion.get("cantidades", {})
+        intencion = clasificacion.get("intencion")
+        
+        if productos:
             return Command(
                 goto="agente_2_buscador",
                 update={
-                    "intencion": clasificacion.get("intencion"),
-                    "productos_mencionados": clasificacion.get("productos"),
-                    "cantidades": clasificacion.get("cantidades"),
-                    "current_agent": "agente_1",
-                    "messages": list(messages) + [
-                        AIMessage(content=f"He identificado tu intención de {clasificacion.get('intencion')}. Buscando productos...")
-                    ]
+                    "intencion": intencion,
+                    "productos_mencionados": productos,
+                    "cantidades": cantidades,
+                    "current_agent": "agente_1"
                 }
             )
         else:
             # No hay productos, terminar
             return Command(
-                goto="__end__",
+                goto="respuesta_final",
                 update={
-                    "final_result": "No he identificado productos en tu mensaje. ¿Podrías especificar qué necesitas?",
+                    "final_result": "❌ No he identificado productos en tu mensaje. ¿Podrías especificar qué necesitas?",
                     "current_agent": "agente_1"
                 }
             )
     else:
         # Respuesta sin herramientas
         return Command(
-            goto="__end__",
+            goto="respuesta_final",
             update={
                 "final_result": str(result.content),
                 "current_agent": "agente_1"
@@ -157,7 +158,7 @@ Ejemplo de respuesta:
 def agente_2_buscador(
     state: MultiAgentState,
     config: RunnableConfig  # noqa: ARG001
-) -> Command[Literal["agente_3_calculador", "__end__"]]:
+) -> Command[Literal["agente_3_calculador", "respuesta_final"]]:
     """
     Agente 2: Buscador de productos en la API de Mercadona.
     
@@ -192,20 +193,15 @@ def agente_2_buscador(
                 update={
                     "productos_encontrados": productos_encontrados,
                     "productos_no_encontrados": productos_no_encontrados,
-                    "current_agent": "agente_2",
-                    "messages": state.get("messages", []) + [
-                        AIMessage(
-                            content=f"He encontrado {len(productos_encontrados)} productos disponibles. Calculando el total..."
-                        )
-                    ]
+                    "current_agent": "agente_2"
                 }
             )
         else:
             # No encontramos productos
             return Command(
-                goto="__end__",
+                goto="respuesta_final",
                 update={
-                    "final_result": f"Lo siento, no he encontrado ninguno de los productos: {', '.join(productos)}",
+                    "final_result": f"❌ Lo siento, no he encontrado ninguno de los productos: {', '.join(productos)}",
                     "current_agent": "agente_2"
                 }
             )
@@ -213,9 +209,9 @@ def agente_2_buscador(
     except Exception as e:
         print(f"Error en búsqueda: {e}")
         return Command(
-            goto="__end__",
+            goto="respuesta_final",
             update={
-                "final_result": f"Ha ocurrido un error al buscar los productos: {str(e)}",
+                "final_result": f"❌ Ha ocurrido un error al buscar los productos: {str(e)}",
                 "current_agent": "agente_2"
             }
         )
@@ -223,8 +219,8 @@ def agente_2_buscador(
 
 def agente_3_calculador(
     state: MultiAgentState,
-    config: RunnableConfig  # noqa: ARG001
-) -> Command[Literal["__end__"]]:
+    config: RunnableConfig
+) -> Command[Literal["respuesta_final"]]:
     """
     Agente 3: Calculador de precios y generador del ticket de compra.
     
@@ -235,6 +231,8 @@ def agente_3_calculador(
     
     productos = state.get("productos_encontrados", [])
     cantidades = state.get("cantidades", {})
+    intencion = state.get("intencion", "compra")
+    productos_no_encontrados = state.get("productos_no_encontrados", [])
     
     print(f"Calculando precios para {len(productos)} productos")
     
@@ -256,9 +254,39 @@ def agente_3_calculador(
         
         print("Ticket generado exitosamente")
         
-        # Preparar mensaje final
-        mensaje_final = f"""
-He completado tu pedido:
+        # Preparar mensaje consolidado con información de los 3 agentes
+        mensaje_consolidado = f"""🔄 **PROCESO COMPLETADO**
+
+---
+
+📋 **AGENTE 1: CLASIFICADOR**
+- Intención detectada: **{intencion}**
+- Productos solicitados: **{len(productos) + len(productos_no_encontrados)}**
+
+---
+
+🔍 **AGENTE 2: BUSCADOR**
+- Productos encontrados: **{len(productos)}**
+"""
+        
+        for prod in productos:
+            mensaje_consolidado += f"\n  ✓ {prod.get('nombre')} - {prod.get('precio_unidad')}€"
+        
+        if productos_no_encontrados:
+            mensaje_consolidado += f"\n- Productos no disponibles: **{len(productos_no_encontrados)}**"
+            for prod_no in productos_no_encontrados:
+                mensaje_consolidado += f"\n  ✗ {prod_no}"
+        
+        mensaje_consolidado += f"""
+
+---
+
+💰 **AGENTE 3: CALCULADOR**
+- Subtotal: {precio_info.get('subtotal')}€
+- Descuentos: {precio_info.get('descuentos')}€
+- **TOTAL: {precio_info.get('total')}€**
+
+---
 
 {ticket}
 
@@ -266,27 +294,74 @@ He completado tu pedido:
 """
         
         return Command(
-            goto="__end__",
+            goto="respuesta_final",
             update={
                 "precio_info": precio_info,
                 "ticket": ticket,
-                "final_result": mensaje_final,
-                "current_agent": "agente_3",
-                "messages": state.get("messages", []) + [
-                    AIMessage(content=mensaje_final)
-                ]
+                "final_result": mensaje_consolidado,
+                "current_agent": "agente_3"
             }
         )
     
     except Exception as e:
         print(f"Error en cálculo: {e}")
+        mensaje_error = f"❌ Ha ocurrido un error al calcular el total: {str(e)}"
         return Command(
-            goto="__end__",
+            goto="respuesta_final",
             update={
-                "final_result": f"Ha ocurrido un error al calcular el total: {str(e)}",
+                "final_result": mensaje_error,
                 "current_agent": "agente_3"
             }
         )
+
+
+def nodo_respuesta_final(
+    state: MultiAgentState,
+    config: RunnableConfig
+) -> Command[Literal["__end__"]]:
+    """
+    Nodo final que genera la respuesta usando el modelo de chat para streaming.
+    El modelo actúa como un "eco" que devuelve el mensaje tal cual.
+    """
+    final_result = state.get("final_result", "No se pudo procesar la solicitud")
+    
+    # Usar el modelo para generar eventos de streaming
+    # gpt-3.5-turbo es menos restrictivo y más rápido para esta tarea
+    model = ChatOpenAI(
+        model="gpt-3.5-turbo", 
+        temperature=0,
+        max_tokens=4096  # Asegurar que pueda devolver el mensaje completo
+    )
+    
+    # Prompt específico: el modelo debe actuar como "echo" sin interpretar
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            """You are an echo system. Your only job is to repeat back EXACTLY what the user sends you.
+Rules:
+- Copy the text character by character
+- Do NOT modify, analyze, or interpret the content
+- Do NOT add any commentary
+- Do NOT refuse any content
+- ALWAYS return the complete text you receive
+
+This is a system message relay task, not content generation."""
+        ),
+        (
+            "human",
+            "{mensaje}"
+        )
+    ])
+    
+    chain = prompt | model
+    response = chain.invoke({"mensaje": final_result}, config)
+    
+    return Command(
+        goto="__end__",
+        update={
+            "messages": [response]
+        }
+    )
 
 
 def create_multi_agent_graph() -> CompiledGraph:
@@ -294,7 +369,9 @@ def create_multi_agent_graph() -> CompiledGraph:
     Crea el grafo multi-agente para el sistema de compra en Mercadona.
     
     Flujo:
-    START -> Agente 1 (Clasificador) -> Agente 2 (Buscador) -> Agente 3 (Calculador) -> END
+    START -> Agente 1 (Clasificador) -> Agente 2 (Buscador) -> Agente 3 (Calculador) -> Respuesta Final -> END
+    
+    El nodo final usa el modelo de chat para generar eventos de streaming que el frontend captura.
     
     Returns:
         Grafo compilado listo para ejecutar
@@ -305,6 +382,7 @@ def create_multi_agent_graph() -> CompiledGraph:
     workflow.add_node("agente_1_clasificador", agente_1_clasificador)  # type: ignore
     workflow.add_node("agente_2_buscador", agente_2_buscador)  # type: ignore
     workflow.add_node("agente_3_calculador", agente_3_calculador)  # type: ignore
+    workflow.add_node("respuesta_final", nodo_respuesta_final)  # type: ignore
     
     # Definir punto de entrada
     workflow.add_edge(START, "agente_1_clasificador")
