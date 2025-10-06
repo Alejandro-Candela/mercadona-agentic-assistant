@@ -16,18 +16,22 @@ El sistema multi-agente para compras en Mercadona ha sido **exitosamente impleme
    - Estado compartido tipado con `TypedDict`
    - Flujo determinístico START → Agente1 → Agente2 → Agente3 → END
 
-2. **Herramientas (Tools)** - Estructuradas y listas
-   - `clasificador_intencion.py` - ⏳ Pendiente implementar lógica
-   - `buscador_mercadona.py` - ⏳ Pendiente API real
-   - `calculador_ticket.py` - ⏳ Pendiente cálculos
+2. **Herramientas (Tools)** - ✅ 100% Implementadas
+   - `clasificador_intencion.py` - ✅ Implementado con NLP real
+   - `buscador_mercadona.py` - ✅ Conectado a API real de Mercadona
+   - `calculador_ticket.py` - ✅ Cálculos y tickets completos
 
-3. **Compatibilidad** - 100% Funcional
+3. **Utilidades (Utils)** - ✅ Nuevas (Distribuidas desde trials.py)
+   - `utils/mercadona_api.py` - ✅ Funciones auxiliares para API
+   - Normalización de texto, peticiones HTTP, búsqueda de productos
+
+4. **Compatibilidad** - 100% Funcional
    - ✅ Compatible con servidor FastAPI existente
    - ✅ Compatible con LangServe
    - ✅ Acepta formato `input` del sistema antiguo
    - ✅ Función legacy `create_graph()` mantenida
 
-4. **Documentación** - Completa
+5. **Documentación** - Completa y Actualizada
    - ✅ README detallado con arquitectura
    - ✅ Script de visualización del sistema
    - ✅ Script de pruebas
@@ -44,18 +48,20 @@ El sistema multi-agente para compras en Mercadona ha sido **exitosamente impleme
 │                                                             │
 │  START                                                      │
 │    ↓                                                        │
-│  Agente 1: CLASIFICADOR                                    │
+│  Agente 1: CLASIFICADOR ✅                                  │
 │    • Tool: clasificar_intencion()                          │
 │    • Extrae: intención, productos, cantidades              │
+│    • NLP con regex y palabras clave                        │
 │    ↓                                                        │
-│  Agente 2: BUSCADOR                                        │
+│  Agente 2: BUSCADOR ✅                                      │
 │    • Tool: buscar_multiples_productos()                    │
-│    • Busca: productos en API Mercadona                     │
+│    • Busca: productos en API REAL de Mercadona             │
+│    • Usa: utils/mercadona_api.py                           │
 │    ↓                                                        │
-│  Agente 3: CALCULADOR                                      │
+│  Agente 3: CALCULADOR ✅                                    │
 │    • Tools: calcular_precio_total()                        │
 │             generar_ticket_compra()                        │
-│    • Genera: ticket de compra                              │
+│    • Genera: ticket formateado estilo Mercadona            │
 │    ↓                                                        │
 │  END                                                        │
 │                                                             │
