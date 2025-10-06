@@ -27,7 +27,8 @@ def nodo_respuesta_final(
     model = ChatOpenAI(
         model="gpt-3.5-turbo", 
         temperature=0,
-        max_tokens=4096  # Asegurar que pueda devolver el mensaje completo
+        max_tokens=4096,
+        streaming=False
     )
     
     # Prompt específico: el modelo debe actuar como "echo" sin interpretar

@@ -9,18 +9,16 @@ from langserve import add_routes
 from gen_ui_backend.graph import create_graph
 from gen_ui_backend.utils.input_types import ChatInputType
 
-# Load environment variables from .env file
 load_dotenv()
 
 
 def start() -> None:
     app = FastAPI(
-        title="Gen UI Backend",
+        title="Mercadona assistant Backend",
         version="1.0",
-        description="A simple api server using Langchain's Runnable interfaces",
+        description="Asistente de compras de Mercadona mediante flujo de agentes",
     )
 
-    # Configure CORS
     origins = [
         "http://localhost",
         "http://localhost:3000",

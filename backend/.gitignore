@@ -1,5 +1,6 @@
 .env
 *.pyc
-__pycache__
 tickets/
+trials/
+docs/
 **/__pycache__/

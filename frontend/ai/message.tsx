@@ -87,6 +87,24 @@ function parseTicketData(content: string): {
   };
 }
 
+function createSummaryMessage(ticketData: TicketData): string {
+  const hasDescuentos = ticketData.descuentos > 0;
+  
+  let message = `✅ **¡Ticket generado con éxito!**\n\n`;
+  message += `📊 **Resumen de la compra:**\n`;
+  message += `- ${ticketData.num_items} productos diferentes\n`;
+  message += `- ${ticketData.num_productos} unidades totales\n`;
+  
+  if (hasDescuentos) {
+    message += `- 💰 Ahorro en descuentos: ${ticketData.descuentos.toFixed(2)}€\n`;
+  }
+  
+  message += `\n**Total a pagar: ${ticketData.total.toFixed(2)}€**\n\n`;
+  message += `📥 Puedes descargar tu ticket en diferentes formatos más abajo.`;
+  
+  return message;
+}
+
 export function AIMessage(props: { value: StreamableValue<string> }) {
   const [data] = useStreamableValue(props.value);
 
@@ -98,9 +116,10 @@ export function AIMessage(props: { value: StreamableValue<string> }) {
   const parsed = parseTicketData(data);
 
   if (parsed.hasTicket && parsed.ticketData) {
+    const summaryMessage = createSummaryMessage(parsed.ticketData);
     return (
       <div>
-        <AIMessageText content={parsed.cleanContent} />
+        <AIMessageText content={summaryMessage} />
         <TicketCompra ticketData={parsed.ticketData} archivos={parsed.archivos} />
       </div>
     );
