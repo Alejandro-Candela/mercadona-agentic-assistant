@@ -118,7 +118,7 @@ Ejemplo de respuesta:
         
         print(f"Intención: {clasificacion.get('intencion')}")
         print(f"Productos: {clasificacion.get('productos')}")
-        print(f"Cantidades: {clasificacion.get('cantidad')}")
+        print(f"Cantidades: {clasificacion.get('cantidades')}")
         
         # Si hay productos, ir al agente buscador
         if clasificacion.get("productos"):
@@ -127,7 +127,7 @@ Ejemplo de respuesta:
                 update={
                     "intencion": clasificacion.get("intencion"),
                     "productos_mencionados": clasificacion.get("productos"),
-                    "cantidades": clasificacion.get("cantidad"),
+                    "cantidades": clasificacion.get("cantidades"),
                     "current_agent": "agente_1",
                     "messages": list(messages) + [
                         AIMessage(content=f"He identificado tu intención de {clasificacion.get('intencion')}. Buscando productos...")
@@ -180,7 +180,7 @@ def agente_2_buscador(
         for resultado in resultados:
             if resultado.get("disponible"):
                 productos_encontrados.append(resultado)
-                print(f"✓ Encontrado: {resultado.get('nombre')} - {resultado.get('precio')}€")
+                print(f"✓ Encontrado: {resultado.get('nombre')} - {resultado.get('precio_unidad')}€")
             else:
                 productos_no_encontrados.append(resultado.get("nombre"))
                 print(f"✗ No disponible: {resultado.get('nombre')}")
