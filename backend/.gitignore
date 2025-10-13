@@ -1,5 +1,6 @@
 .env
 *.pyc
+*.pckl
 tickets/
 trials/
 docs/
