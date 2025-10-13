@@ -1,6 +1,24 @@
 {
   "dependencies": ["./gen_ui_backend"],
   "graphs": {
+    "mercadona_multi_agent": {
+      "path": "gen_ui_backend.graph:create_multi_agent_graph",
+      "description": "Multi-agent graph for Mercadona shopping system",
+      "nodes": {
+        "agente_1_clasificador": {
+          "description": "Classifier agent that processes initial input"
+        },
+        "agente_2_buscador": {
+          "description": "Search agent that finds products"
+        },
+        "agente_3_calculador": {
+          "description": "Calculator agent that processes quantities and prices"
+        },
+        "respuesta_final": {
+          "description": "Final response node that generates streaming events"
+        }
+      }
+    }
   },
   "env": ".env"
 }
